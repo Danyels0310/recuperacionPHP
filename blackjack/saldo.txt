@@ -1,0 +1,3 @@
+Jugador1#1000
+Jugador2#1000
+Jugador3#1000Jugador4#1000

@@ -9,13 +9,10 @@
 </head>
 <body>
 <?php
-/* $dinero=sueldo();
-if($dinero){ */
-	$apu1=$_POST["apuesta1"];
-	$apu2=$_POST["apuesta2"];
-	$apu3=$_POST["apuesta3"];
-	$apu4=$_POST["apuesta4"];
-
+$botes=bote();
+$dinero=minimo($botes);
+$apuestas=array($_POST["apuesta1"],$_POST["apuesta2"], $_POST["apuesta3"], $_POST["apuesta4"]);
+if($dinero){ 
 	$baraja=array('1P','1D','1T','1C','2P','2D','2T','2C','3P','3D','3T','3C','4P','4D','4T','4C','5P','5D','5T','5C','6P','6D','6T','6C','7P','7D','7T','7C','8P','8D','8T','8C','9P','9D','9T','9C','10P','10D','10T','10C','JP','JD','JT','JC','QP','QD','QT','QC','KP','KD','KT','KC');	
 	shuffle($baraja); //barajamos la baraja
 
@@ -50,16 +47,17 @@ if($dinero){ */
 			$cont++;
 			}while($sum<17);
 		}
-		$cartas[$i]=($repartir);
-		$puntos[$i]=$sum;
+		$cartas[$i]=($repartir);//en este array guardamos las cartas que se va a mostrar
+		$puntos[$i]=$sum;//en este array guardamos las puntuaciones  de cada jugador y de la mesa
 	}
 
 	mostrarCartas($cartas, $puntos);
-	mostrarResultado($puntos);
-/* }else{
+	$puntuacion=mostrarResultado($puntos, $apuestas, $botes);
+	nuevoBote($puntuacion);
+}else{
 	echo "Uno de los jugadores tiene menos de 100€";
-} */	
-
+}	
+//funcion que muestra las cartas y la puntuacion por pantalla
 function mostrarCartas($cartas, $puntos){
 	echo "<table border='1'>";
 	for ($i=0; $i<5; $i++){	
@@ -75,58 +73,76 @@ function mostrarCartas($cartas, $puntos){
 	}
 	echo "</table>";
 }
-
-function mostrarResultado($puntos){
+// funcion que coge las puntuaciones de todos lo jugadores y de la mesa, y va comparando la putuación
+// de cada jugador con la mesa y aplica la diferentes situaciones. y ademas crea un array para poder 
+// ver como quedaría el saldo de caada jugador despues de cada jugada
+function mostrarResultado($puntos, $apuestas, $botes){
+	$puntuacion=array();
 	for ($i=0; $i<4; $i++){	
-		if ($puntos[4]<21){
+		if ($puntos[4]<21){ //si la mesa tiene menos de 21
 			if($puntos[4]>$puntos[$i]){
 				echo "<div id='pierde'> El jugador ".($i+1)." pierde.</div>";
+				$puntuacion[$i]=$botes[$i]-$apuestas[$i];
 			}else if($puntos[4]==$puntos[$i]){
 				echo "<div id='empata'>El jugador ".($i+1)." empata.</div>";
+				$puntuacion[$i]=$botes[$i];
 			}else if($puntos[4]<$puntos[$i] || $puntos[$i]>=21){
 				echo "<div id='gana'>El jugador ".($i+1)." gana.</div>";
+				$puntuacion[$i]=$botes[$i]+$apuestas[$i];
 			}
-		}else if ($puntos[4]>21){
+		}else if ($puntos[4]>21){ //si la mesa tiene mas de 21
 			if(21>$puntos[$i]){
 				echo "<div id='pierde'>El jugador ".($i+1)." pierde.</div>";
+				$puntuacion[$i]=$botes[$i]-$apuestas[$i];
 			}else if(21<$puntos[$i]){
 				echo "<div id='empata'>El jugador ".($i+1)." empata.</div>";
+				$puntuacion[$i]=$botes[$i];
 			}else if(21==$puntos[$i]){
 				echo "<div id='gana'>El jugador ".($i+1)." gana.</div>";
+				$puntuacion[$i]=$botes[$i]+$apuestas[$i];
 			}
-		}else if ($puntos[4]==21){
+		}else if ($puntos[4]==21){ //si la mesa tiene 21
 			if(21<$puntos[$i] || 21>$puntos[$i]){
 				echo "<div id='pierde'>El jugador ".($i+1)." pierde.</div>";
+				$puntuacion[$i]=$botes[$i]-$apuestas[$i];
 			}else if(21==$puntos[$i]){
 				echo "<div id='gana'>El jugador ".($i+1)." gana.</div>";
+				$puntuacion[$i]=$botes[$i]+$apuestas[$i];
 			}
 		}
 	}
+	return $puntuacion;
 }
-
-function sueldo(){
-	$nombre="saldo.txt";
-	$archivo=fopen($nombre,"w+");
-	$leer=fopen($nombre,"r");
-	$jugar=false;
-	if(file_exists($nombre)){
-		while(!feof($fich)) {
-			$texto=fgets($fich);
-			$r=strpos($texto, '#');
-			$cantidad=intval(substr($texto,$r+1));
-			if ($cantidad>100){
-				$jugar=true;
-			}
-		}
-	}else{
-		for ($i=1;$i<5;$i++){
-			fwrite($archivo,"Jugador".$i."#".str_pad("1",4,"0",STR_PAD_RIGHT)."\n");
+//funcion que extrae del fichero saldo.txt el saldo de cada jugador y lo mete en un array
+function bote(){
+	$botes = Array();
+	$fichero=file("saldo.txt");
+	foreach($fichero as $clave => $valor){
+		$bote = substr($valor, strpos($valor, "#")+1);
+		array_push($botes, $bote);	
+	}		
+	return $botes;
+}
+//funcion que devuelve un boolean para ver si algún jugador tiene un saldo de  menos de 100
+function minimo($botes){
+	for ($i=0; $i<sizeOf($botes); $i++){
+		if ($botes[$i]>100){
+			$minimo=true;
+		}else{
+			$minimo=false;
 		}
 	}
-	return $jugar;
+	return $minimo;
 }
-
-
+//funcion que modifica el saldo de cada jugador
+function nuevoBote($puntuacion){
+	$cont = 1;
+	$fichero = fopen("saldo.txt", "w");
+	
+	for($i = 0; $i < sizeOf($puntuacion); $i++){
+		fwrite($fichero, "Jugador".($i+1)."#".$puntuacion[$i]."\n");
+	}
+}
 
 
 ?>
