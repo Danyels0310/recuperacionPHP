@@ -52,19 +52,34 @@
 <?php
 	}
 	else{
+		$coche=$_POST["vehiculos"];
+		$matricula=substr($coche,0,strpos($coche,"-"));
+		
 		if (isset($_POST["devolver"])){
-			$coche=$_POST["vehiculos"];
-			$matricula=substr($coche,0,strpos($coche,"-"));
-			$hoy=date('Y-m-d');
-			
 			$select_value="SELECT fecha_devolucion FROM ralquilar WHERE matricula='$matricula';";
+			$idk=mysqli_query($conn,$select_value);
 			$fila=mysqli_fetch_assoc($idk);
 			$devolucion=$fila['fecha_devolucion'];
-			var_dump($devolucion);
-			var_dump($hoy);
+			$hoy=date('Y-m-d');
 			
-			if($devolucion<=$hoy){
-				$update_value="UPDATE rvehiculos SET disponible=1 where matricula='$alquila[0]';";
+			if($devolucion<$hoy){
+				$interval = date_diff($hoy, $devolucion);
+				$dias=$interval->format('%a');
+				$select_value="SELECT preciobase FROM rvehiculo WHERE matricula='$matricula';";
+				$idk=mysqli_query($conn,$select_value);
+				$fila=mysqli_fetch_assoc($idk);
+				$precio=$fila['preciobase'];
+				$precio_final=$dias*$precio
+			
+				$update_value1="UPDATE ralquilar SET fecha_devolucion=$hoy AND preciototal=$precio_final where matricula='$matricula';";
+				$resultado=mysqli_query($conn, $update_value1);
+				
+				$update_value2="UPDATE rvehiculos SET disponible=1 where matricula='$matricula';";
+				$resultado=mysqli_query($conn, $update_value2);
+				echo "<script type='text/javascript'>alert('La devolución se hizo correctamente');</script>";
+				header("location:movdevolver.php");
+			}if($devolucion=$hoy))
+				$update_value="UPDATE rvehiculos SET disponible=1 where matricula='$matricula';";
 				$resultado=mysqli_query($conn, $update_value);
 				echo "<script type='text/javascript'>alert('La devolución se hizo correctamente');</script>";
 				header("location:movdevolver.php");
