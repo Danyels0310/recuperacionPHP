@@ -33,11 +33,11 @@
 	<form action="" method="post">
 		<h3>Peliculas alquiladas </h3> <BR>
 	<?php
-		$select_value=" SELECT film.title, rental_date FROM rental, inventory, film WHERE rental.inventory_id=inventory.inventory_id AND inventory.film_id=film.film_id AND customer_id='$sesion' ORDER BY rental_date;";
+		$select_value=" SELECT film.title, rental_date FROM rental, inventory, film WHERE rental.inventory_id=inventory.inventory_id AND inventory.film_id=film.film_id AND customer_id='$sesion' AND return_date='0000-00-00 00:00:00' ORDER BY rental_date;";
 			$resultado = mysqli_query($conn, $select_value);
 			if($resultado){
 				if (mysqli_num_rows($resultado) > 0) {
-					echo "<table border=1px><tr><th>TITULO</th><th>FECHA DE DEVOLUCION</th></tr>";
+					echo "<table border=1px><tr><th>TITULO</th><th>FECHA DE ALQUILER</th></tr>";
 					while ($row = mysqli_fetch_assoc($resultado)) {
 						 echo "<tr>";
 						 echo "<td>".$row['title']."</td>";
@@ -45,8 +45,8 @@
 					}
 					echo "</table></br>";
 				} else {
-					trigger_error("No tienes ninguna pelicula");
-					echo "<a href='alqcons.php'>Volver a consultar</a>";					
+					echo "<script type='text/javascript'>alert('No tienes ninguna pelicula alquilada');</script>";
+					header("location:alqcons.php");					
 				}
 			}else{
 				trigger_error("Error: " . $select_value . "<br/>" . mysqli_error($conn));
